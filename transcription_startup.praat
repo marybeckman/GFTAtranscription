@@ -1,14 +1,11 @@
-
-
 # [STARTUP WIZARD EVENT LOOP]
 
 # The user enters their [initials] and their location. They choose the 
-# appropriate [testwave] for the NWR task and specify the [subject] they wish to
+# appropriate [testwave] for the GFTA task and specify the [subject] they wish to
 # transcribe. From this information the script loads the [audio], [wordlist] and
 # [segdata] data required for transcription. The event-loop is exited if a user 
 # chooses to [quit], if a file cannot be found, or if the user can [transcribe]
 # a trial.
-
 
 startup_node_initials$    = "initials"
 startup_node_testwave$    = "testwave"
@@ -32,42 +29,42 @@ while startup_node$ != startup_node_quit$ and startup_node$ != startup_node_tran
 	if startup_node$ == startup_node_initials$
 		@startup_initials()
 		@log_initials()
-		
+
 		@next_back_quit(startup_initials.result_node$, startup_node_testwave$, "", startup_node_quit$)
 		startup_node$ = next_back_quit.result$
-		
+
 	# [TASK, TIMEPOINT]
 	elsif startup_node$ == startup_node_testwave$
-		@startup_nwr_testwave()
-		@log_nwr_testwave()
+		@startup_GFTA_testwave()
+		@log_GFTA_testwave()
 
-		@next_back_quit(startup_nwr_testwave.result_node$, startup_node_subject$, startup_node_initials$, startup_node_quit$)
+		@next_back_quit(startup_GFTA_testwave.result_node$, startup_node_subject$, startup_node_initials$, startup_node_quit$)
 		startup_node$ = next_back_quit.result$
-	
+
 	# [SUBJECT]
 	elsif startup_node$ == startup_node_subject$
-		
+
 		# [LOCAL FILE SYSTEM VARIABLES] Use results from the previous nodes to generate filepaths
 		drive$ = startup_initials.drive$
 		audio_drive$ = startup_initials.audio_drive$
-		task$ = startup_nwr_testwave.task$
-		testwave$ = startup_nwr_testwave.testwave$
+		task$ = startup_GFTA_testwave.task$
+		testwave$ = startup_GFTA_testwave.testwave$
 		initials$ = startup_initials.initials$
-		
+
 		@transcription_filepaths(drive$, audio_drive$, task$, testwave$)
 		@log_transcription_filepaths()
-		
+
 		audio_dir$ = transcription_filepaths.audio_dir$
 		segmentDirectory$ = transcription_filepaths.segmentDirectory$
 		transDirectory$ = transcription_filepaths.transDirectory$
 		transLogDirectory$ = transcription_filepaths.transLogDirectory$
 		transSnippetDirectory$ = transcription_filepaths.transSnippetDirectory$
 		wordList_dir$ = transcription_filepaths.wordList_dir$
-		
+
 		# Prompt for ID
 		@startup_id()
 		@log_startup_id()
-		
+
 		@next_back_quit(startup_id.result_node$, startup_node_audio$, startup_node_testwave$, startup_node_quit$)
 		startup_node$ = next_back_quit.result$
 
@@ -76,7 +73,7 @@ while startup_node$ != startup_node_quit$ and startup_node$ != startup_node_tran
 		id_number$ = startup_id.id_number$
 		@startup_load_audio(audio_dir$, task$, id_number$)
 		@log_load_audio()
-		
+
 		@next_back_quit(startup_load_audio.result_node$, startup_node_wordlist$, "", startup_node_quit$)
 		startup_node$ = next_back_quit.result$
 
@@ -84,45 +81,43 @@ while startup_node$ != startup_node_quit$ and startup_node$ != startup_node_tran
 	elsif startup_node$ == startup_node_wordlist$
 		audio_sound$ = startup_load_audio.audio_sound$
 		experimental_ID$ = startup_load_audio.experimental_ID$
-		@startup_nwr_wordlist(task$, experimental_ID$, drive$, wordList_dir$)
+		@startup_GFTA_wordlist(task$, experimental_ID$, drive$, wordList_dir$)
 
 		@next_back_quit(startup_wordlist.result_node$, startup_node_segdata$, "", startup_node_quit$)
 		startup_node$ = next_back_quit.result$
-	
+
 	# [SEGMENTATION TEXTGRID]
 	elsif startup_node$ == startup_node_segdata$
 		@startup_segm_textgrid(segmentDirectory$, task$, experimental_ID$)
 		@log_startup_segm_textgrid()
-		
+
 		@next_back_quit(startup_wordlist.result_node$, startup_node_quit$, "", startup_node_quit$)
 		startup_node$ = next_back_quit.result$
-	
 	endif
 endwhile
 
-
-
-
-## Startup procedures that are currently specific to just non-word transcription
-## 		@start_nwr_testwave
+## Startup procedures that are currently specific to just GFTA transcription
+## 		@start_GFTA_testwave
 ## 		@transcription_filepaths
-## 		@startup_nwr_wordlist - wrapper for @startup-wordlist
+## 		@startup_GFTA_wordlist - wrapper for @startup-wordlist
 
 
 # [NODE] Get the experimental task and the timepoint ("testwave") of the recording
-procedure startup_nwr_testwave()
+procedure startup_GFTA_testwave()
 	beginPause ("'procedure$' - Initializing session, step 3 (task and test wave of recording).")
 		comment ("Please choose the experimental task of the recording.")
 			optionMenu ("Task", 1)
-			option ("NonWordRep")
+			option ("GFTA")
 		# Prompt the transcriber to specify the testwave (i.e., the "TimePoint") of the data.
 		comment ("Please specify the test wave of the recording.")
 		optionMenu ("Testwave", 1)
 			option ("TimePoint1")
 			option ("TimePoint2")
+			option ("CrossSectional1_UW")
+			option ("CrossSectional_CI")
 			option ("Other")
 	button = endPause ("Back", "Quit", "Continue", 3)
-	
+
 	# Use the 'button' variable to determine which node to transition to next.
 	if button == 1
 		.result_node$ = node_back$
@@ -133,40 +128,36 @@ procedure startup_nwr_testwave()
 		# of the 'task$' and 'testwave$' variables
 		.testwave$ = testwave$
 		.task$ = task$
-		
+
 		.result_node$ = node_next$
 	endif
 endproc
 
 # console output for debugging
-procedure log_nwr_testwave()
+procedure log_GFTA_testwave()
 	if debug_mode
-		appendInfoLine("---- log_nwr_testwave() ----")
-		appendInfoLine("Exit Status: ", startup_nwr_testwave.result_node$)
-		if startup_nwr_testwave.result_node$ == node_next$
+		appendInfoLine("---- log_GFTA_testwave() ----")
+		appendInfoLine("Exit Status: ", startup_GFTA_testwave.result_node$)
+		if startup_GFTA_testwave.result_node$ == node_next$
 			appendInfoLine("derived values: ")
-			appendInfoLine(tab$, ".task$: ", startup_nwr_testwave.task$)
-			appendInfoLine(tab$, ".testwave$: ", startup_nwr_testwave.testwave$)
+			appendInfoLine(tab$, ".task$: ", startup_GFTA_testwave.task$)
+			appendInfoLine(tab$, ".testwave$: ", startup_GFTA_testwave.testwave$)
 		endif
 		appendInfoLine("")
 	endif
 endproc
 
-
-
-
 # [SUBNODE] Setup directory path names for navigating the local filesystem.
 procedure transcription_filepaths(.drive$, .audio_drive$, .task$, .testwave$)
-	
 	# Where is the non-audio data located?
 	data_dir$ = .drive$ + "DataAnalysis/" + .task$ + "/" + .testwave$
-	
+
 	# Where are audio files saved?
 	.audio_dir$ = .audio_drive$ + "DataAnalysis/" + .task$ + "/" + .testwave$ + "/Recordings"
-	
+
 	# Segmentations ready to be transcribed from
 	.segmentDirectory$ = data_dir$ + "/Segmentation/TranscriptionReady"
-	
+
 	# Where transcriptions and transcription logs go
 	.transDirectory$ = data_dir$ + "/Transcription/TranscriptionTextGrids"
 	.transLogDirectory$ = data_dir$ + "/Transcription/TranscriptionLogs"
@@ -176,7 +167,7 @@ procedure transcription_filepaths(.drive$, .audio_drive$, .task$, .testwave$)
 
 	# WordList.txt files from
 	.wordList_dir$ = data_dir$ + "/WordLists"
-	
+
 	# Word List table columns
 	if .task$ == "RealWordRep"
 		.wl_trial  = 1
@@ -206,7 +197,7 @@ procedure log_transcription_filepaths()
 		appendInfoLine(tab$, ".task$: ", transcription_filepaths.task$)
 		appendInfoLine(tab$, ".testwave$: ", transcription_filepaths.testwave$)
 		appendInfoLine("")
-		
+
 		appendInfoLine("derived values: ")
 		appendInfoLine(tab$, ".audio_dir$: ", transcription_filepaths.audio_dir$)
 		appendInfoLine(tab$, ".segmentDirectory$: ", transcription_filepaths.segmentDirectory$)
@@ -222,39 +213,34 @@ procedure log_transcription_filepaths()
 	endif
 endproc
 
-
-
-
-# [NODE] Load a NWR wordlist and store information about the NWR wordlist table
-procedure startup_nwr_wordlist(.task$, .experimental_ID$, .drive$, .wordList_dir$)
-	# Column number and name constants for a NWR rep table.
-	.trial_number      = 1
-	.trial_number$     = "TrialNumber"
-	.trial_type        = 2
-	.trial_type$       = "TrialType"
-	.orthography      = 3
-	.orthography$     = "Orthography"
-	.worldbet         = 4
-	.worldbet$        = "WorldBet"
-	.frame1           = 5
-	.frame1$          = "Frame1"
-	.target1          = 6
-	.target1$         = "Target1"
-	.target2          = 7
-	.target2$         = "Target2"
-	.frame2           = 8
-	.frame2$          = "Frame2"
-	.target_structure  = 9
-	.target_structure$ = "TargetStructure"
-	.frequency        = 10
-	.frequency$       = "Frequency"
-	.comparison_pair   = 11
-	.comparison_pair$  = "ComparisonPair"
+# [NODE] Load a GFTA wordlist and store information about the GFTA wordlist table
+procedure startup_GFTA_wordlist(.task$, .experimental_ID$, .drive$, .wordList_dir$)
+	# Column number and name constants for a GFTA rep table.
+	.word		= 1
+	.word$		= "word"
+	.worldBet		= 2
+	.worldBet$	= "wb"
+	.orthography	= 3
+	.orthography$	= "ortho"
+	.stress		= 4
+	.stress$		= "stress"
+	.targetC1		= 5
+	.targetC1$	= "targetC1"
+	.targetC2		= 6
+	.targetC2$	= "targetC2"
+	.targetC3		= 7
+	.targetC3$	= "targetC3"
+	.prosPos1		= 8
+	.prosPos1$	= "prosPos1"
+	.prosPos2		= 9
+	.prosPos2$	= "prosPos2"
+	.prosPos3		= 10
+	.prosPos3$	= "prosPos3"
 
 	# Try to load the wordlist using the generic word-list loader
 	@startup_wordlist(.task$, .experimental_ID$, .drive$, .wordList_dir$)
 	@log_startup_wordlist()
-	
+
 	.basename$ = startup_wordlist.wordList_basename$
 	.filename$ = startup_wordlist.wordList_filename$
 	.filepath$ = startup_wordlist.wordList_filepath$
@@ -262,6 +248,3 @@ procedure startup_nwr_wordlist(.task$, .experimental_ID$, .drive$, .wordList_dir
 	.exists = startup_wordlist.wordList_exists
 	.result_node$ = startup_wordlist.result_node$
 endproc
-
-
-
