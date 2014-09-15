@@ -6,7 +6,6 @@ continueTranscription = 1
 
 include check_version.praat
 include procs.praat
-include segment_features.praat
 include startup_procs.praat
 include transcription_startup.praat
 
@@ -58,7 +57,7 @@ transLogBasename$ = gfta_trans_log.basename$
 # These are column names
 transLogTrials$ = gfta_trans_log.trials$
 transLogTrialsTranscribed$ = gfta_trans_log.trials_transcribed$
-
+transLogEndTime$ = gfta_trans_log.end$
 
 ###############################################################################
 #                             Code for Transcription                                #
@@ -101,7 +100,7 @@ else
 endif
 
 @selectTable(segmentBasename$)
-Extract rows where column (text): "tier", "is equal to", "Context"
+Extract rows where column (text): "tier", "is equal to", "Trial"
 Rename: "TierTimes"
 
 # Loop through the trials of the current type
@@ -186,13 +185,13 @@ while (currentTrial <= n_trials & continueTranscription)
 	prosPos2$ = Get value: currentTrial, wordListprosPos2$
 	prosPos3$ = Get value: currentTrial, wordListprosPos3$
 
-	if targetC1$ != "?"
+	if targetC1$ != ""
 		@TranscribeSegment(targetC1$, prosPos1$, currentTrial, 1)
 	endif
-	if targetC2$ != "?"
+	if targetC2$ != ""
 		@TranscribeSegment(targetC2$, prosPos2$, currentTrial, 2)
 	endif
-	if targetC3$ != "?"
+	if targetC3$ != ""
 		@TranscribeSegment(targetC3$, prosPos3$, currentTrial, 3)
 	endif
 
@@ -220,6 +219,8 @@ while (currentTrial <= n_trials & continueTranscription)
 	# Update the number of trials that have been transcribed.
 	@selectTable(transLogBasename$)
 	Set numeric value: 1, transLogTrialsTranscribed$, currentTrial
+	@currentTime
+	Set string value: 1, transLogEndTime$, currentTime.t$
 	Save as tab-separated file: gfta_trans_log.filepath$
 
 	#increment trial number
@@ -456,12 +457,13 @@ procedure gfta_trans_log(.method$, .task$, .experimental_ID$, .initials$, .direc
 			# Initialize the values of the GFTA Transcription Log.
 			Create Table with column names: .basename$, 1, column_names$
 
-			currentTime$ = replace$(date$(), " ", "_", 0)
+			#currentTime$ = replace$(date$(), " ", "_", 0)
+			@currentTime
 			@selectTable(.basename$)
 
 			Set string value: 1, .transcriber$, .initials$
-			Set string value: 1, .start$, currentTime$
-			Set string value: 1, .end$, currentTime$
+			Set string value: 1, .start$, currentTime.t$
+			Set string value: 1, .end$, currentTime.t$
 
 			Set numeric value: 1, .trials_transcribed$, 0
 
