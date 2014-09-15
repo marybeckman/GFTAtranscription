@@ -156,8 +156,8 @@ procedure transcription_filepaths(.drive$, .audio_drive$, .task$, .testwave$)
 	.audio_dir$ = .audio_drive$ + "DataAnalysis/" + .task$ + "/" + .testwave$ + "/Recordings"
 
 	# Segmentations ready to be transcribed from
-	.segmentDirectory$ = data_dir$ + "/Segmentation/TranscriptionReady"
-
+	#.segmentDirectory$ = data_dir$ + "/Segmentation/TranscriptionReady"
+	.segmentDirectory$ = data_dir$ + "/Segmentation/TextGrids"
 	# Where transcriptions and transcription logs go
 	.transDirectory$ = data_dir$ + "/Transcription/TranscriptionTextGrids"
 	.transLogDirectory$ = data_dir$ + "/Transcription/TranscriptionLogs"
@@ -218,23 +218,23 @@ procedure startup_GFTA_wordlist(.task$, .experimental_ID$, .drive$, .wordList_di
 	# Column number and name constants for a GFTA rep table.
 	.word		= 1
 	.word$		= "word"
-	.worldBet		= 2
+	.worldBet	= 2
 	.worldBet$	= "wb"
 	.orthography	= 3
 	.orthography$	= "ortho"
 	.stress		= 4
-	.stress$		= "stress"
-	.targetC1		= 5
+	.stress$	= "stress"
+	.targetC1	= 5
 	.targetC1$	= "targetC1"
-	.targetC2		= 6
+	.targetC2	= 6
 	.targetC2$	= "targetC2"
-	.targetC3		= 7
+	.targetC3	= 7
 	.targetC3$	= "targetC3"
-	.prosPos1		= 8
+	.prosPos1	= 8
 	.prosPos1$	= "prosPos1"
-	.prosPos2		= 9
+	.prosPos2	= 9
 	.prosPos2$	= "prosPos2"
-	.prosPos3		= 10
+	.prosPos3	= 10
 	.prosPos3$	= "prosPos3"
 
 	# Try to load the wordlist using the generic word-list loader

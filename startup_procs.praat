@@ -61,7 +61,7 @@ procedure startup_initials()
 
 		# Use the value of the '.location$' variable to set up the 'drive$' variables.
 		if (.location$ == "Generic")
-			dirLength = length (defaultDirectory$) - 17
+			dirLength = length (defaultDirectory$) - 43
 			.drive$ = left$(defaultDirectory$, dirLength)
 			.audio_drive$ = left$(defaultDirectory$, dirLength)
 		elsif (.location$ == "WaismanLab")
