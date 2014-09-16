@@ -186,13 +186,16 @@ while (currentTrial <= n_trials & continueTranscription)
 	prosPos3$ = Get value: currentTrial, wordListprosPos3$
 
 	if targetC1$ != ""
-		@TranscribeSegment(targetC1$, prosPos1$, currentTrial, 1)
+#		@TranscribeSegment(targetC1$, prosPos1$, currentTrial, 1)
+		@TranscribeSegment(targetC1$, prosPos1$, currentTrial, 1, targetWord$)
 	endif
 	if targetC2$ != ""
-		@TranscribeSegment(targetC2$, prosPos2$, currentTrial, 2)
+#		@TranscribeSegment(targetC2$, prosPos2$, currentTrial, 2)
+		@TranscribeSegment(targetC2$, prosPos2$, currentTrial, 2, targetWord$)
 	endif
 	if targetC3$ != ""
-		@TranscribeSegment(targetC3$, prosPos3$, currentTrial, 3)
+#		@TranscribeSegment(targetC3$, prosPos3$, currentTrial, 3)
+		@TranscribeSegment(targetC3$, prosPos3$, currentTrial, 3, targetWord$)
 	endif
 
 ##### This results in a very ungraceful way to quit midstream.  Figure out a better way.
@@ -230,14 +233,16 @@ endwhile
 select all
 Remove
 
-procedure TranscribeSegment(.target$, .pros$, .currentTrial, .whichSegment)
+# procedure TranscribeSegment(.target$, .pros$, .currentTrial, .whichSegment)
+procedure TranscribeSegment(.target$, .pros$, .currentTrial, .whichSegment, .word$)
 	# Zoom to the segmented interval in the editor window.
 	editor TextGrid 'transBasename$'
 		Zoom: segmentXMin - 0.25, segmentXMax + 0.25
 	endeditor
 
 	beginPause ("Make a selection in the editor window")
-		comment ("Next sound to transcribe: '.target$'")
+#		comment ("Next sound to transcribe: '.target$'")
+		comment ("Next sound to transcribe: '.target$' at '.pros$' in '.word$'")
 		comment ("Please select the whole sound in the editor window")
 	clicked = endPause ("Ruin everything", "Continue to transcribe this sound", 2, 1)
 
@@ -255,13 +260,13 @@ procedure TranscribeSegment(.target$, .pros$, .currentTrial, .whichSegment)
 		comment ("Choose a phonemic transcription.")
 		choice ("Phonemic transcription", 1)
 		option ("'.target$'")
-		option (":")
+#		option (":")
 		option ("$")
 		option ("-")
 		option ("#")
 		option ("M")
 		option ("!")
-		comment (": = between two (transcribable) sounds")
+#		comment (": = between two (transcribable) sounds")
 		comment ("$ = substitution (outside of phonetic space for target, transcribable using worldbet")
 		comment ("- = deletion of target sound (consonant cluster reduction is coded as substitution, not deletion)")
 		comment ("# = distortion (outside of phonetic space for target sound, not transcribable using worldbet)")
@@ -280,15 +285,15 @@ procedure TranscribeSegment(.target$, .pros$, .currentTrial, .whichSegment)
 		# Score the production as 0
 		scoring_transcription$ = "0"
 
-	# Prompt for boundaries of intermediate sounds
-	elsif phonemic_transcription$ = ":"
-		beginPause ("Intermediate sound.")
-			comment ("The token fell somewhere in a continuum between two sounds")
-			comment ("First sound: Which sound was the token closest to?")
-			word ("closer_sound", "")
-			comment ("Second sound: What was the other sound")
-			word ("other_sound", "")
-		endPause ("Ruin everything", "Continue transcribing", 2, 1)
+#	# Prompt for boundaries of intermediate sounds
+#	elsif phonemic_transcription$ = ":"
+#		beginPause ("Intermediate sound.")
+#			comment ("The token fell somewhere in a continuum between two sounds")
+#			comment ("First sound: Which sound was the token closest to?")
+#			word ("closer_sound", "")
+#			comment ("Second sound: What was the other sound")
+#			word ("other_sound", "")
+#		endPause ("Ruin everything", "Continue transcribing", 2, 1)
 
 		phonetic_transcription$ = "'closer_sound$':'other_sound$'"
 
