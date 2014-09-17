@@ -58,6 +58,7 @@ transLogBasename$ = gfta_trans_log.basename$
 transLogTrials$ = gfta_trans_log.trials$
 transLogTrialsTranscribed$ = gfta_trans_log.trials_transcribed$
 transLogEndTime$ = gfta_trans_log.end$
+transLogScore$ = gfta_trans_log.score$
 
 ###############################################################################
 #                             Code for Transcription                                #
@@ -144,7 +145,7 @@ while (currentTrial <= n_trials & continueTranscription)
 			Zoom: get_xbounds_in_textgrid_interval.xmin, get_xbounds_in_textgrid_interval.xmax
 		endeditor
 		beginPause("Choose repetition number to transcribe")
-			choice("Repetition number", 1)
+			choice("Repetition number", numResponses)
 				for repnum from 1 to 'numResponses'
 					option("'repnum'")
 				endfor
@@ -172,8 +173,6 @@ while (currentTrial <= n_trials & continueTranscription)
 	Insert boundary: gfta_trans_textgrid.prosodicPos, segmentXMax
 	Insert boundary: gfta_trans_textgrid.phonemic, segmentXMin
 	Insert boundary: gfta_trans_textgrid.phonemic, segmentXMax
-	Insert boundary: gfta_trans_textgrid.phonetic, segmentXMin
-	Insert boundary: gfta_trans_textgrid.phonetic, segmentXMax
 
 	# Determine the target word and target segments. 
 	@selectTable(wordListBasename$)
@@ -186,15 +185,12 @@ while (currentTrial <= n_trials & continueTranscription)
 	prosPos3$ = Get value: currentTrial, wordListprosPos3$
 
 	if targetC1$ != ""
-#		@TranscribeSegment(targetC1$, prosPos1$, currentTrial, 1)
 		@TranscribeSegment(targetC1$, prosPos1$, currentTrial, 1, targetWord$)
 	endif
 	if targetC2$ != ""
-#		@TranscribeSegment(targetC2$, prosPos2$, currentTrial, 2)
 		@TranscribeSegment(targetC2$, prosPos2$, currentTrial, 2, targetWord$)
 	endif
 	if targetC3$ != ""
-#		@TranscribeSegment(targetC3$, prosPos3$, currentTrial, 3)
 		@TranscribeSegment(targetC3$, prosPos3$, currentTrial, 3, targetWord$)
 	endif
 
@@ -219,11 +215,10 @@ while (currentTrial <= n_trials & continueTranscription)
 	@selectTextGrid(transBasename$)
 	Save as text file: gfta_trans_textgrid.filepath$
 
-	# Update the number of trials that have been transcribed.
 	@selectTable(transLogBasename$)
-	Set numeric value: 1, transLogTrialsTranscribed$, currentTrial
 	@currentTime
 	Set string value: 1, transLogEndTime$, currentTime.t$
+	Set numeric value: 1, transLogTrialsTranscribed$, currentTrial
 	Save as tab-separated file: gfta_trans_log.filepath$
 
 	#increment trial number
@@ -233,7 +228,6 @@ endwhile
 select all
 Remove
 
-# procedure TranscribeSegment(.target$, .pros$, .currentTrial, .whichSegment)
 procedure TranscribeSegment(.target$, .pros$, .currentTrial, .whichSegment, .word$)
 	# Zoom to the segmented interval in the editor window.
 	editor TextGrid 'transBasename$'
@@ -252,73 +246,21 @@ procedure TranscribeSegment(.target$, .pros$, .currentTrial, .whichSegment, .wor
 		interval_mid = (start_time + ((end_time - start_time)/2))
 	endeditor
 
-	# Prompt the user to choose a phonemic transcription and provide a 
-	# phonetic transcription.
+	# Prompt the user to rate production.
 
 	# Prompt for transcription code
-	beginPause ("Enter the transcriptions of target consonant #'.whichSegment'.")
+	beginPause ("Rate the production of consonant #'.whichSegment'.")
 		comment ("Choose a phonemic transcription.")
-		choice ("Phonemic transcription", 1)
-		option ("'.target$'")
-#		option (":")
-		option ("$")
-		option ("-")
-		option ("#")
-		option ("M")
-		option ("!")
-#		comment (": = between two (transcribable) sounds")
-		comment ("$ = substitution (outside of phonetic space for target, transcribable using worldbet")
-		comment ("- = deletion of target sound (consonant cluster reduction is coded as substitution, not deletion)")
-		comment ("# = distortion (outside of phonetic space for target sound, not transcribable using worldbet)")
-		comment ("M = not transcribable (e.g., obscured by noise or too quiet)")
-		comment ("! = word is not a GFTA word (i.e., word/sound were skipped)")
-	endPause ("Ruin everything", "Add transcriptions", 2, 1)
+		choice ("Rating", 1)
+		option ("Correct")
+		option ("Incorrect")
+	endPause ("Ruin everything", "Rate Production", 2, 1)
 
 	# Prompt for substituted sound
-	if phonemic_transcription$ = "$"
-		beginPause ("Substitution")
-			comment ("Enter the substituted sound.")
-			word ("substituted_sound", "")
-		endPause ("Ruin everything", "Continue transcribing this word", 2, 1)
-		phonetic_transcription$ = substituted_sound$
-
-		# Score the production as 0
-		scoring_transcription$ = "0"
-
-#	# Prompt for boundaries of intermediate sounds
-#	elsif phonemic_transcription$ = ":"
-#		beginPause ("Intermediate sound.")
-#			comment ("The token fell somewhere in a continuum between two sounds")
-#			comment ("First sound: Which sound was the token closest to?")
-#			word ("closer_sound", "")
-#			comment ("Second sound: What was the other sound")
-#			word ("other_sound", "")
-#		endPause ("Ruin everything", "Continue transcribing", 2, 1)
-
-		phonetic_transcription$ = "'closer_sound$':'other_sound$'"
-
-		# If the sound is closer to the target, score it 1. Otherwise, 0.
-		if closer_sound$ = .target$
-			scoring_transcription$ = "1"
-		else
-			scoring_transcription$ = "0"
-		endif
-
-	# For the rest of the cases, the GFTA code goes in the phonetic transcription tier
+	if rating$ = "Correct"
+		.segmentScore = 1
 	else
-		phonetic_transcription$ = phonemic_transcription$
-	endif
-
-	# Attach a score for "target", "M", "!", "-", "#" productions
-	# Score productions of targets as 1
-	if phonemic_transcription$ = .target$
-		scoring_transcription$ = "1"
-	# Score inaudible productions as NA
-	elsif (phonemic_transcription$ = "M" ||  phonemic_transcription$ = "!")
-		scoring_transcription$ = "NA"
-	# Score distortions and deletions as 0
-	elsif (phonemic_transcription$ = "#" ||  phonemic_transcription$ = "-")
-		scoring_transcription$ = "0"
+		.segmentScore = 0
 	endif
 
 	# Add boundaries and text to the Phonetic, Phonemic, transCheck tiers
@@ -327,16 +269,13 @@ procedure TranscribeSegment(.target$, .pros$, .currentTrial, .whichSegment, .wor
 	Insert boundary... gfta_trans_textgrid.prosodicPos 'end_time'
 	Insert boundary... gfta_trans_textgrid.phonemic 'start_time'
 	Insert boundary... gfta_trans_textgrid.phonemic 'end_time'
-	Insert boundary... gfta_trans_textgrid.phonetic 'start_time'
-	Insert boundary... gfta_trans_textgrid.phonetic 'end_time'
 
 	# Add the transcriptions to the TextGrid.
-	sound_int = Get interval at time... gfta_trans_textgrid.phonetic 'interval_mid'
+	sound_int = Get interval at time... gfta_trans_textgrid.phonemic 'interval_mid'
 	Set interval text... gfta_trans_textgrid.prosodicPos 'sound_int' '.pros$'
-	Set interval text... gfta_trans_textgrid.phonemic 'sound_int' 'phonemic_transcription$'
-	Set interval text... gfta_trans_textgrid.phonetic 'sound_int' 'phonetic_transcription$'
+	Set interval text... gfta_trans_textgrid.phonemic 'sound_int' '.target$'
 
-	Insert point... gfta_trans_textgrid.score 'interval_mid' 'scoring_transcription$'
+	Insert point... gfta_trans_textgrid.score 'interval_mid' '.segmentScore'
 
 	# Notes on the transcription of the word
 	beginPause ("Notes")	
@@ -352,6 +291,14 @@ procedure TranscribeSegment(.target$, .pros$, .currentTrial, .whichSegment, .wor
 	# Backup current TextGrid
 	select TextGrid 'transBasename$'
 #	Save as text file... 'textGridBackup_filepath$'
+
+
+	# Update the GFTA score.
+	@selectTable(transLogBasename$)
+
+	.score = Get value: 1, transLogScore$
+	.score = .score + .segmentScore
+	Set numeric value: 1, transLogScore$, .score
 endproc
 
 procedure transcribe_notes(.trial_number, .word$, .target1$, .target2$)
@@ -436,9 +383,11 @@ procedure gfta_trans_log(.method$, .task$, .experimental_ID$, .initials$, .direc
 	.trials$ = "NumberOfTrials"
 	.trials_transcribed = 5
 	.trials_transcribed$ = "NumberOfTrialsTranscribed"
+	.score = 6
+	.score$ = "Score"
 
 	# Concatenate column names argument for the Create Table command
-	column_names$ = "'.transcriber$' '.start$' '.end$' '.trials$' '.trials_transcribed$'"
+	column_names$ = "'.transcriber$' '.start$' '.end$' '.trials$' '.trials_transcribed$' '.score$'"
 
 	# Filename constants
 	audio_basename$ = .experimental_ID$ + "_Audio"
@@ -469,10 +418,9 @@ procedure gfta_trans_log(.method$, .task$, .experimental_ID$, .initials$, .direc
 			Set string value: 1, .transcriber$, .initials$
 			Set string value: 1, .start$, currentTime.t$
 			Set string value: 1, .end$, currentTime.t$
-
 			Set numeric value: 1, .trials_transcribed$, 0
-
 			Set numeric value: 1, .trials$, .nTrials
+			Set numeric value: 1, .score$, 0
 		endif
 	endif
 endproc
@@ -480,22 +428,17 @@ endproc
 #### PROCEDURE to load the transcription textgrid file or create the TextGrid object.
 procedure gfta_trans_textgrid(.method$, .task$, .experimental_ID$, .initials$, .directory$)
 	# Numeric and string constants for the GFTA transcription textgrid
-#	.segments = 1
 	.prosodicPos = 1
 	.phonemic = 2
-	.phonetic = 3
-	.score = 4
-	.notes = 5
+	.score = 3
+	.notes = 4
 
-#	.segments$ = "Segments"
 	.prosodicPos$ = "ProsodicPos"
 	.phonemic$ = "Phonemic"
-	.phonetic$ = "Phonetic"
 	.score$ = "Score"
 	.notes$ = "TransNotes"
 
-	.level_names$ = "'.prosodicPos$' '.phonemic$'
-				 ... '.phonetic$' '.score$' '.notes$'"
+	.level_names$ = "'.prosodicPos$' '.phonemic$' '.score$' '.notes$'"
 
 	audio_basename$ = .experimental_ID$ + "_Audio"
 	.basename$ = .task$ + "_" + .experimental_ID$ + "_" + .initials$ + "trans"
