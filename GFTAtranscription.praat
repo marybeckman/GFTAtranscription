@@ -5,10 +5,10 @@ debug_mode = 0
 continueTranscription = 1
 
 include check_version.praat
-include ../Utilities/L2T-Utilities.praat
-include ../Audio/L2T-Audio.praat
-include ../StartupForm/L2T-StartupForm.praat
-include ../WordList/L2T-WordList.praat
+include ../L2T-utilities/L2T-Utilities.praat
+include ../L2T-Audio/L2T-Audio.praat
+include ../L2T-StartupForm/L2T-StartupForm.praat
+include ../L2T-WordList/L2T-WordList.praat
 include ../L2T-SegmentationTextGrid/L2T-SegmentationTextGrid.praat
 include ../L2T-Transcription/L2T-Transcription.praat
 
