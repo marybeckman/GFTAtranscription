@@ -5,7 +5,7 @@ debug_mode = 0
 continueTranscription = 1
 
 include check_version.praat
-include ../L2T-utilities/L2T-Utilities.praat
+include ../L2T-utilities/L2T-utilities.praat
 include ../L2T-Audio/L2T-Audio.praat
 include ../L2T-StartupForm/L2T-StartupForm.praat
 include ../L2T-WordList/L2T-WordList.praat
@@ -63,7 +63,7 @@ if transcription_log.exists == transcription_textgrid.exists
 	@transcription_textgrid("load", session_parameters.experimental_task$, participant.id$, session_parameters.initials$, transcription_parameters.textGridDirectory$)
 # Otherwise exit with an error message
 else
-	log_part$ = "Log " + transctiption_log.filename$
+	log_part$ = "Log " + transcription_log.filename$
 	grid_part$ = "TextGrid " + transcription_textgrid.filename$
 	if transcrtiption_log.exists
 		msg$ = "Initialization error: " + log_part$ + "was found, but " + grid_part$ + " was not."
@@ -386,7 +386,7 @@ procedure writeLine .variable$
 	endif	
 endproc
 
-#### PROCEDURE to count the remaining trials yet to be transribed.
+#### PROCEDURE to count the remaining trials yet to be transcribed.
 procedure count_remaining_trials(.log_basename$, .row)
 	selectObject(.log_basename$)
 	.n_trials = Get value: .row, "NumberOfTrials"
