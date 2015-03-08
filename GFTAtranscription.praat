@@ -5,7 +5,7 @@ debug_mode = 0
 continueTranscription = 1
 
 include check_version.praat
-include ../L2T-utilities/L2T-utilities.praat
+include ../L2T-utilities/L2T-Utilities.praat
 include ../L2T-Audio/L2T-Audio.praat
 include ../L2T-StartupForm/L2T-StartupForm.praat
 include ../L2T-WordList/L2T-WordList.praat
@@ -65,7 +65,7 @@ if transcription_log.exists == transcription_textgrid.exists
 else
 	log_part$ = "Log " + transcription_log.filename$
 	grid_part$ = "TextGrid " + transcription_textgrid.filename$
-	if transcrtiption_log.exists
+	if transcription_log.exists
 		msg$ = "Initialization error: " + log_part$ + "was found, but " + grid_part$ + " was not."
 	else
 		msg$ = "Initialization error: " + grid_part$ + "was found, but " + log_part$ + " was not."
@@ -85,6 +85,7 @@ transLogTrials$ = transcription_log.trials$
 transLogTrialsTranscribed$ = transcription_log.trials_transcribed$
 transLogEndTime$ = transcription_log.end$
 transLogScore$ = transcription_log.score$
+transLogTranscribeableTokens$ = transcription_log.transcribeable$
 
 ###############################################################################
 #                             Code for Transcription                                #
@@ -239,9 +240,6 @@ while (currentTrial <= n_trials & continueTranscription)
 		Remove
 	endif
 
-	selectObject(transBasename$)
-	Save as text file: transcription_textgrid.filepath$
-
 	selectObject(transLogBasename$)
 	@currentTime
 	Set string value: 1, transLogEndTime$, currentTime.t$
@@ -261,34 +259,22 @@ procedure TranscribeSegment(.target$, .pros$, .currentTrial, .whichSegment, .wor
 		Zoom: segmentXMin - 0.25, segmentXMax + 0.25
 	endeditor
 
-	beginPause ("Make a selection in the editor window")
-#		comment ("Next sound to transcribe: '.target$'")
-		comment ("Next sound to transcribe: '.target$' at '.pros$' in '.word$'")
-		comment ("Please select the whole sound in the editor window")
-	clicked = endPause ("Ruin everything", "Continue to transcribe this sound", 2, 1)
+#	beginPause ("Make a selection in the editor window")
+	#		comment ("Next sound to transcribe: '.target$'")
+#		comment ("Next sound to transcribe: '.target$' at '.pros$' in '.word$'")
+#		comment ("Please select the whole sound in the editor window")
+#	clicked = endPause ("Ruin everything", "Continue to transcribe this sound", 2, 1)
 
-	editor 'transBasename$'
-		start_time = Get start of selection
-		end_time = Get end of selection
-		interval_mid = (start_time + ((end_time - start_time)/2))
-	endeditor
+#	editor 'transBasename$'
+#		start_time = Get start of selection
+#		end_time = Get end of selection
+#		interval_mid = (start_time + ((end_time - start_time)/2))
+#	endeditor
 
-	# Prompt the user to rate production.
-
-	# Prompt for transcription code
-	beginPause ("Rate the production of consonant #'.whichSegment'.")
-		comment ("Choose a phonemic transcription.")
-		choice ("Rating", 1)
-		option ("Correct")
-		option ("Incorrect")
-	endPause ("Ruin everything", "Rate Production", 2, 1)
-
-	# Prompt for substituted sound
-	if rating$ = "Correct"
-		.segmentScore = 1
-	else
-		.segmentScore = 0
-	endif
+	.spacing = (segmentXMax - segmentXMin)/7
+	start_time = segmentXMin + (.spacing * ((.whichSegment * 2) -1))
+	end_time = segmentXMin + .spacing + (.spacing * ((.whichSegment * 2) -1))
+	interval_mid = (start_time + ((end_time - start_time)/2))
 
 	# Add boundaries and text to the Phonetic, Phonemic, transCheck tiers
 	selectObject(transBasename$)
@@ -302,7 +288,42 @@ procedure TranscribeSegment(.target$, .pros$, .currentTrial, .whichSegment, .wor
 	Set interval text... transcription_textgrid.prosodicPos 'sound_int' '.pros$'
 	Set interval text... transcription_textgrid.phonemic 'sound_int' '.target$'
 
-	Insert point... transcription_textgrid.score 'interval_mid' '.segmentScore'
+	# Prompt the user to rate production.
+	beginPause ("Rate the production of consonant #'.whichSegment'.")
+		comment ("Next sound to transcribe: '.target$' at '.pros$' in '.word$'")
+		comment ("Choose a phonemic transcription.")
+		choice ("Rating", 1)
+		option ("Correct")
+		option ("Incorrect")
+		option ("Untranscribeable")
+	endPause ("Ruin everything", "Rate Production", 2, 1)
+ 
+	if rating$ != "Untranscribeable"
+		if rating$ = "Correct"
+			.segmentScore = 1
+		else
+			.segmentScore = 0
+		endif
+		# Update the GFTA score.
+		selectObject(transLogBasename$)
+
+		.score = Get value: 1, transLogScore$
+		.score = .score + .segmentScore
+		Set numeric value: 1, transLogScore$, .score
+
+		selectObject(transBasename$)
+		Insert point... transcription_textgrid.score 'interval_mid' '.segmentScore'
+	else
+		# Update number of GFTA transcribeable segments.
+		selectObject(transLogBasename$)
+
+		.numTrabscribeable = Get value: 1, transLogTranscribeableTokens$
+		.numTrabscribeable = .numTrabscribeable - 1
+		Set numeric value: 1, transLogTranscribeableTokens$, .numTrabscribeable
+
+		selectObject(transBasename$)
+		Insert point... transcription_textgrid.score 'interval_mid' Not Transcribeable
+	endif
 
 	# Notes on the transcription of the word
 	beginPause ("Notes")	
@@ -315,17 +336,11 @@ procedure TranscribeSegment(.target$, .pros$, .currentTrial, .whichSegment, .wor
 		Insert point... transcription_textgrid.notes 'interval_mid' 'trans_notes$'
 	endif
 
-	# Backup current TextGrid
 	selectObject(transBasename$)
-#	Save as text file... 'textGridBackup_filepath$'
+	Save as text file: transcription_textgrid.filepath$
 
-
-	# Update the GFTA score.
 	selectObject(transLogBasename$)
-
-	.score = Get value: 1, transLogScore$
-	.score = .score + .segmentScore
-	Set numeric value: 1, transLogScore$, .score
+	Save as tab-separated file: transcription_log.filepath$
 endproc
 
 procedure transcribe_notes(.trial_number, .word$, .target1$, .target2$)
